@@ -1,19 +1,24 @@
+using System;
 using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-namespace API.Middlewares
+namespace API.Middleware
 {
-    public class ExeptionMiddleWare
+    public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger<ExeptionMiddleWare> _logger;
+        private readonly ILogger<ExceptionMiddleware> _logger;
         private readonly IHostEnvironment _env;
-        public ExeptionMiddleWare(RequestDelegate next, ILogger<ExeptionMiddleWare> logger, IHostEnvironment env)
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger,
+            IHostEnvironment env)
         {
             _env = env;
             _logger = logger;
             _next = next;
-
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -34,9 +39,14 @@ namespace API.Middlewares
                     Detail = _env.IsDevelopment() ? ex.StackTrace?.ToString() : null,
                     Title = ex.Message
                 };
-                var option = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
-                var json = JsonSerializer.Serialize(response, option);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy =
+                    JsonNamingPolicy.CamelCase
+                };
+
+                var json = JsonSerializer.Serialize(response, options);
 
                 await context.Response.WriteAsync(json);
             }
